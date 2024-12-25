@@ -1,0 +1,16 @@
+{
+  "name": "hackatime-aseprite",
+  "displayName": "wakatime",
+  "description": "record your time :)",
+  "version": "0.1",
+  "author": { "name": "Arthur Hardy" },
+  "contributors": [ ],
+  "publisher": "spectralo",
+  "license": "CC-BY-4.0",
+  "categories": [ "Scripts" ],
+  "contributes": {
+    "scripts": [
+        { "path": "./script.lua" }
+    ]
+  }
+}
