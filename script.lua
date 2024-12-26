@@ -1,57 +1,131 @@
-local config_file_path = os.getenv("HOME") .. "/.wakatime.cfg"
+LastTime = nil
+ProjectName = string
 
-local function getPlatformInfo()
+function cliName()
     local osName, isArm = app.os.name, app.os.arm64
-    local cliNames = {
-        Windows = isArm and "/.wakatime/wakatime-cli-windows-arm64" or "/.wakatime/wakatime-cli-windows-amd64",
-        Linux = isArm and "/.wakatime/wakatime-cli-linux-arm64" or "/.wakatime/wakatime-cli-linux-amd64",
-        macOS = isArm and "/.wakatime/wakatime-cli-darwin-arm64" or "/.wakatime/wakatime-cli-darwin-amd64"
-    }
-    local downloadPaths = {
-        Windows = isArm and "windows-arm64.zip" or "windows-amd64.zip",
-        Linux = isArm and "linux-arm64.zip" or "linux-amd64.zip",
-        macOS = isArm and "darwin-arm64.zip" or "darwin-amd64.zip"
-    }
-    return {
-        cliName = cliNames[osName] or "",
-        downloadPath = "https://github.com/wakatime/wakatime-cli/releases/latest/download/wakatime-cli-" ..
-        (downloadPaths[osName] or "")
-    }
+    if osName == "Windows" then
+        return isArm and "wakatime-cli-windows-arm64.exe" or "wakatime-cli-windows-amd64.exe"
+    elseif osName == "Linux" then
+        return isArm and "wakatime-cli-linux-arm64" or "wakatime-cli-linux-amd64"
+    elseif osName == "macOS" then
+        return isArm and "wakatime-cli-darwin-arm64" or "wakatime-cli-darwin-amd64"
+    end
 end
 
-local function readConfig(filePath)
-    local file = io.open(filePath, "r")
-    if not file then return nil end
-    local prefs = {}
-    for line in file:lines() do
-        local key, value = line:match("([^=]+)%s*=%s*(.+)")
-        if key and value then prefs[key:match("%S+")] = value:match("%S+") end
+function getUserPath()
+    if app.os.name == "Windows" then
+        return os.getenv("USERPROFILE")
+    else
+        return os.getenv("HOME")
     end
-    file:close()
-    return prefs
+end
+
+function updateSprite()
+    if not LastTime or LastTime < os.time() - 60 then
+        sendData()
+        LastTime = os.time()
+    end
+end
+
+function registerSprite()
+    if SpriteListener then
+        Sprite.events:off(SpriteListener)
+    end
+    if app.sprite then
+        Sprite = app.sprite
+        SpriteListener = Sprite.events:on('change', updateSprite)
+    end
+end
+
+function sendData()
+    print(CurrentFile())
+    print(getCursorPos())
+    local cmd = string.format(
+        '%s/.wakatime/%s --category designing --plugin aseprite --time %d --project %s --lineno %s --lines-in-file %s --entity %s',
+        getUserPath(),
+        cliName(),
+        os.time(),
+        ProjectName,
+        getCursorPos(),
+        getSpriteHeight(),
+        CurrentFile()
+    )
+    print(cmd)
+    os.execute(cmd)
+end
+
+function CurrentFile()
+    return Sprite.filename
+end
+
+function getSpriteHeight()
+    local h = Sprite.height
+    return h
+end
+
+function getCursorPos()
+    local cel = app.cel
+    local position = cel.position
+    return position.x
+end
+
+function setProjectName(plugin)
+    local dlg = Dialog {
+        title = "Set Project Name"
+    }
+    dlg:entry {
+        id = "projectName",
+        label = "Project Name",
+        text = ProjectName
+    }
+    dlg:button {
+        id = "ok",
+        text = "OK",
+        onclick = function()
+            ProjectName = dlg.data.projectName
+            if plugin then
+                plugin.preferences.projectName = ProjectName
+            end
+            dlg:close()
+        end
+    }
+    dlg:show()
 end
 
 function init(plugin)
-    local prefs = plugin.preferences
-    if not prefs.api_url or not prefs.api_token then
-        app.alert("Getting data from your .wakatime.cfg")
-        local config = readConfig(config_file_path)
-        if not config then
-            app.alert("Can't read your wakatime config file :/")
-            return
-        end
-        prefs.api_url, prefs.api_token = config.api_url, config.api_token
-        app.alert("Data saved!")
-    end
-
-    local platform = getPlatformInfo()
-    local fullPath = os.getenv("HOME") .. platform.cliName
-    app.alert("Getting CLI path: " .. fullPath)
-
-    if app.fs.isFile(fullPath) then
-        app.alert("Wakatime-cli found!")
+    if plugin.preferences.projectName then
+        ProjectName = plugin.preferences.projectName
     else
-        app.alert("Wakatime-cli isn't installed :/ Downloading it ....")
-        app.alert("Downloading CLI from " .. platform.downloadPath)
+        ProjectName = "Untitled"
+        plugin.preferences.projectName = ProjectName
     end
+
+    app.alert("Wakatime plugin is loaded")
+    if ProjectName == "Untitled" then
+        app.alert(
+            "Don't forget to add your project name and change it. It's at the end of the burger menu -> Set Project Name")
+    end
+
+    registerSprite()
+
+    local timer = Timer {
+        interval = 2.0,
+        ontick = function()
+            registerSprite()
+        end
+    }
+    timer:start()
+
+    plugin:newCommand {
+        id = "setProjectName",
+        title = "Set Project Name",
+        group = "palette_generation",
+        onclick = function()
+            setProjectName(plugin)
+        end
+    }
 end
+
+return {
+    init = init
+}
