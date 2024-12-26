@@ -1,5 +1,7 @@
 LastTime = nil
 ProjectName = string
+PluginVer = "0.1.0"
+AsepriteVer = app.version
 
 function cliName()
     local osName, isArm = app.os.name, app.os.arm64
@@ -38,19 +40,19 @@ function registerSprite()
 end
 
 function sendData()
-    print(CurrentFile())
-    print(getCursorPos())
     local cmd = string.format(
-        '%s/.wakatime/%s --category designing --plugin aseprite --time %d --project %s --lineno %s --lines-in-file %s --entity %s',
+        '%s/.wakatime/%s --language Aseprite --category designing --plugin "Aseprite/%s (%s-none-none) aseprite-wakatime/%s" --time %d --project %s --lineno %s --lines-in-file %s --entity %s',
         getUserPath(),
         cliName(),
+        AsepriteVer.major .. "." .. AsepriteVer.minor,
+        app.os.name,
+        PluginVer,
         os.time(),
         ProjectName,
         getCursorPos(),
         getSpriteHeight(),
         CurrentFile()
     )
-    print(cmd)
     os.execute(cmd)
 end
 
@@ -93,6 +95,8 @@ function setProjectName(plugin)
 end
 
 function init(plugin)
+    AsepriteVer = app.version
+
     if plugin.preferences.projectName then
         ProjectName = plugin.preferences.projectName
     else
