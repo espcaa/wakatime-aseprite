@@ -1,6 +1,6 @@
 LastTime = nil
 ProjectName = string
-PluginVer = "0.1.0"
+PluginVer = "1.0.0"
 AsepriteVer = app.version
 
 function cliName()
