@@ -24,9 +24,13 @@ You don't really build an aseprite plugin, you just need to zip the whole folder
 Step-by step:
 
 1. Clone the repo
-2. Zip repo & rename the cloned repo:
+2. Cd into the repo
     ```bash
-    zip -r hackatime-aseprite.aseprite-extension hackatime-aseprite
+    cd wakatime-Aseprite
+    ```
+2. Zip & rename the folder:
+    ```bash
+    zip -r wakatime-aseprite.aseprite-extension src
     ```
 
 ## License
