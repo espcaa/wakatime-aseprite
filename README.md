@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/91b614e6-9e19-4d31-a38d-603608e3034e)
+
 # Wakatime-Aseprite
 
 A simple Aseprite plugin to track your time in Wakatime.
