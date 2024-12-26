@@ -1,6 +1,6 @@
 LastTime = nil
 ProjectName = string
-PluginVer = "0.1.0"
+PluginVer = "1.0.1"
 AsepriteVer = app.version
 
 function cliName()
@@ -67,8 +67,11 @@ end
 
 function getCursorPos()
     local cel = app.cel
-    local position = cel.position
-    return position.x
+    if cel == nil then
+        return 0
+    else
+        return cel.position.y
+    end
 end
 
 function setProjectName(plugin)
