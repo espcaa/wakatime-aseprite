@@ -1,9 +1,9 @@
 # Wakatime-Aseprite
 
 A simple Aseprite plugin to track your time in Wakatime.
-This implementation is very lazy (Don't hesitate to contribute!) and thus doesnt do a few things you'd expect from an official wakatime-plugin:
-- It doesnt automatically download and update your wakatime-cli (Another editor will probably do this for you, I hope at least)
-- Doesnt ask you to add your api key (You can add it manually in your .wakatime.cfg)
+This implementation is basic (Don't hesitate to contribute!) and thus doesn't do a few things you'd expect from an official wakatime-plugin:
+- It doesn't automatically download and update your wakatime-cli (Another editor will probably do this for you, I hope at least)
+- Doesn't ask you to add your api key (You can add it manually in your .wakatime.cfg)
 
 ## Installation
 
