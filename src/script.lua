@@ -13,10 +13,6 @@ function cliName()
         return isArm and "wakatime-cli-linux-arm64" or "wakatime-cli-linux-amd64"
     elseif osName == "macOS" then
         return isArm and "wakatime-cli-darwin-arm64" or "wakatime-cli-darwin-amd64"
-    else
-        app.log("Wakatime Plugin: Unsupported OS - " .. osName)
-        return ""
-    end
 end
 
 function getUserPath()
@@ -32,11 +28,6 @@ function isSpriteValid()
 end
 
 function sendData()
-    if not isSpriteValid() then
-        app.log("Wakatime Plugin: Attempted to send data with an invalid or deleted sprite.")
-        return
-    end
-
     local cmd = string.format(
         '%s/.wakatime/%s --language Aseprite --category designing --plugin "Aseprite/%s (%s-none-none) aseprite-wakatime/%s" --time %d --project "%s" --lineno %d --lines-in-file %d --entity "%s"',
         getUserPath(),
@@ -52,12 +43,6 @@ function sendData()
     )
 
     local success, _, exit_code = os.execute(cmd)
-
-    if success then
-        app.log("Wakatime Plugin: Data sent successfully.")
-    else
-        app.log("Wakatime Plugin: Failed to send data. Exit code: " .. tostring(exit_code))
-    end
 end
 
 function updateSprite()
@@ -71,16 +56,13 @@ function registerSprite()
     if SpriteListener and Sprite then
         Sprite.events:off(SpriteListener)
         SpriteListener = nil
-        app.log("Wakatime Plugin: Detached old sprite listener.")
     end
 
     if app.sprite then
         Sprite = app.sprite
         SpriteListener = Sprite.events:on('change', updateSprite)
-        app.log("Wakatime Plugin: Attached new sprite listener.")
     else
         Sprite = nil
-        app.log("Wakatime Plugin: No active sprite to register.")
     end
 end
 
@@ -128,7 +110,6 @@ function setProjectName(plugin)
                 if plugin then
                     plugin.preferences.projectName = ProjectName
                 end
-                app.log("Wakatime Plugin: Project name set to '" .. ProjectName .. "'.")
                 dlg:close()
             else
                 app.alert("Project name cannot be empty.")
