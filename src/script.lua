@@ -148,6 +148,15 @@ end
 function init(plugin)
     AsepriteVer = app.version
 
+    plugin:newCommand {
+        id = "setProjectName",
+        title = "Set Project Name",
+        group = "palette_generation",
+        onclick = function()
+            setProjectName(plugin)
+        end
+    }
+
     if plugin.preferences.projectName and plugin.preferences.projectName ~= "" then
         ProjectName = plugin.preferences.projectName
     else
@@ -174,14 +183,7 @@ function init(plugin)
     }
     timer:start()
 
-    plugin:newCommand {
-        id = "setProjectName",
-        title = "Set Project Name",
-        group = "palette_generation",
-        onclick = function()
-            setProjectName(plugin)
-        end
-    }
+
 
     sendData()
 end
