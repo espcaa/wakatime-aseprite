@@ -13,6 +13,7 @@ function cliName()
         return isArm and "wakatime-cli-linux-arm64" or "wakatime-cli-linux-amd64"
     elseif osName == "macOS" then
         return isArm and "wakatime-cli-darwin-arm64" or "wakatime-cli-darwin-amd64"
+    end
 end
 
 function getUserPath()
