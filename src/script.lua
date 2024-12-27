@@ -1,7 +1,9 @@
 LastTime = nil
-ProjectName = string
-PluginVer = "1.0.1"
+ProjectName = "Untitled"
+PluginVer = "1.1.0"
 AsepriteVer = app.version
+Sprite = nil
+SpriteListener = nil
 
 function cliName()
     local osName, isArm = app.os.name, app.os.arm64
@@ -11,6 +13,9 @@ function cliName()
         return isArm and "wakatime-cli-linux-arm64" or "wakatime-cli-linux-amd64"
     elseif osName == "macOS" then
         return isArm and "wakatime-cli-darwin-arm64" or "wakatime-cli-darwin-amd64"
+    else
+        app.log("Wakatime Plugin: Unsupported OS - " .. osName)
+        return ""
     end
 end
 
@@ -22,26 +27,18 @@ function getUserPath()
     end
 end
 
-function updateSprite()
-    if not LastTime or LastTime < os.time() - 60 then
-        sendData()
-        LastTime = os.time()
-    end
-end
-
-function registerSprite()
-    if SpriteListener then
-        Sprite.events:off(SpriteListener)
-    end
-    if app.sprite then
-        Sprite = app.sprite
-        SpriteListener = Sprite.events:on('change', updateSprite)
-    end
+function isSpriteValid()
+    return Sprite ~= nil and app.sprite ~= nil and Sprite == app.sprite
 end
 
 function sendData()
+    if not isSpriteValid() then
+        app.log("Wakatime Plugin: Attempted to send data with an invalid or deleted sprite.")
+        return
+    end
+
     local cmd = string.format(
-        '%s/.wakatime/%s --language Aseprite --category designing --plugin "Aseprite/%s (%s-none-none) aseprite-wakatime/%s" --time %d --project %s --lineno %s --lines-in-file %s --entity %s',
+        '%s/.wakatime/%s --language Aseprite --category designing --plugin "Aseprite/%s (%s-none-none) aseprite-wakatime/%s" --time %d --project "%s" --lineno %d --lines-in-file %d --entity "%s"',
         getUserPath(),
         cliName(),
         AsepriteVer.major .. "." .. AsepriteVer.minor,
@@ -53,16 +50,54 @@ function sendData()
         getSpriteHeight(),
         CurrentFile()
     )
-    os.execute(cmd)
+
+    local success, _, exit_code = os.execute(cmd)
+
+    if success then
+        app.log("Wakatime Plugin: Data sent successfully.")
+    else
+        app.log("Wakatime Plugin: Failed to send data. Exit code: " .. tostring(exit_code))
+    end
+end
+
+function updateSprite()
+    if isSpriteValid() and (not LastTime or LastTime < os.time() - 60) then
+        sendData()
+        LastTime = os.time()
+    end
+end
+
+function registerSprite()
+    if SpriteListener and Sprite then
+        Sprite.events:off(SpriteListener)
+        SpriteListener = nil
+        app.log("Wakatime Plugin: Detached old sprite listener.")
+    end
+
+    if app.sprite then
+        Sprite = app.sprite
+        SpriteListener = Sprite.events:on('change', updateSprite)
+        app.log("Wakatime Plugin: Attached new sprite listener.")
+    else
+        Sprite = nil
+        app.log("Wakatime Plugin: No active sprite to register.")
+    end
 end
 
 function CurrentFile()
-    return Sprite.filename
+    if isSpriteValid() then
+        return Sprite.filename or "Untitled"
+    else
+        return "No File"
+    end
 end
 
 function getSpriteHeight()
-    local h = Sprite.height
-    return h
+    if isSpriteValid() then
+        return Sprite.height
+    else
+        return 0
+    end
 end
 
 function getCursorPos()
@@ -87,30 +122,46 @@ function setProjectName(plugin)
         id = "ok",
         text = "OK",
         onclick = function()
-            ProjectName = dlg.data.projectName
-            if plugin then
-                plugin.preferences.projectName = ProjectName
+            local newName = dlg.data.projectName:match("^%s*(.-)%s*$")
+            if newName ~= "" then
+                ProjectName = newName
+                if plugin then
+                    plugin.preferences.projectName = ProjectName
+                end
+                app.log("Wakatime Plugin: Project name set to '" .. ProjectName .. "'.")
+                dlg:close()
+            else
+                app.alert("Project name cannot be empty.")
             end
+        end
+    }
+    dlg:button {
+        id = "cancel",
+        text = "Cancel",
+        onclick = function()
             dlg:close()
         end
     }
-    dlg:show()
+    dlg:show { wait = true }
 end
 
 function init(plugin)
     AsepriteVer = app.version
 
-    if plugin.preferences.projectName then
+    if plugin.preferences.projectName and plugin.preferences.projectName ~= "" then
         ProjectName = plugin.preferences.projectName
     else
         ProjectName = "Untitled"
         plugin.preferences.projectName = ProjectName
     end
 
-    app.alert("Wakatime plugin is loaded")
+    app.alert("Wakatime plugin is loaded.")
+
     if ProjectName == "Untitled" then
         app.alert(
-            "Don't forget to add your project name and change it. It's at the end of the burger menu -> Set Project Name")
+            "Don't forget to set your project name for accurate tracking." ..
+            "Access it via the burger menu -> Set Project Name."
+        )
     end
 
     registerSprite()
@@ -126,11 +177,13 @@ function init(plugin)
     plugin:newCommand {
         id = "setProjectName",
         title = "Set Project Name",
-        group = "palette_generation",
+        group = "plugins",
         onclick = function()
             setProjectName(plugin)
         end
     }
+
+    sendData()
 end
 
 return {
