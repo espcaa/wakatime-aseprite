@@ -1,6 +1,6 @@
 LastTime = nil
 ProjectName = "Untitled"
-PluginVer = "1.1.0"
+PluginVer = "1.1.1"
 AsepriteVer = app.version
 Sprite = nil
 SpriteListener = nil
