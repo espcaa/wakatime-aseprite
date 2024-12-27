@@ -177,7 +177,7 @@ function init(plugin)
     plugin:newCommand {
         id = "setProjectName",
         title = "Set Project Name",
-        group = "plugins",
+        group = "palette_generation",
         onclick = function()
             setProjectName(plugin)
         end
