@@ -150,7 +150,7 @@ function init(plugin)
 
     if ProjectName == "Untitled" then
         app.alert(
-            "Don't forget to set your project name for accurate tracking." ..
+            "Don't forget to set your project name for accurate tracking. " ..
             "Access it via the burger menu -> Set Project Name."
         )
     end
