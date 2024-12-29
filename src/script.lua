@@ -1,6 +1,6 @@
 LastTime = nil
 ProjectName = "Untitled"
-PluginVer = "1.1.1"
+PluginVer = "1.1.2"
 AsepriteVer = app.version
 Sprite = nil
 SpriteListener = nil
@@ -54,7 +54,7 @@ function updateSprite()
 end
 
 function registerSprite()
-    if SpriteListener and Sprite then
+    if isSpriteValid() then
         Sprite.events:off(SpriteListener)
         SpriteListener = nil
     end
