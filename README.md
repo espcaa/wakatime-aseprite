@@ -11,7 +11,7 @@ This implementation is basic (Don't hesitate to contribute!) and thus doesn't do
 
 1. Download the latest release from the [releases page](https://github.com/spectralo/hackatime-aseprite/releases)
 2. Open Aseprite
-3. Go to settings (Ctrl+, or Cmd+, or Ctrl+K or Cmd+K)
+3. Go to settings (`Ctrl + ,`, `⌘ + ,`, `Ctrl + K`, or `⌘ + K`)
 4. Go to extensions
 5. Click on "Add extension"
 6. Select the downloaded file
