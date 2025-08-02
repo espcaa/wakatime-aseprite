@@ -7,8 +7,12 @@ SpriteListener = nil
 
 
 function getUserPath()
-    if app.os.name == "Windows" then
-        return os.getenv("USERPROFILE")
+    if app.os.name then
+        if app.os.name == "Windows" then
+            return os.getenv("USERPROFILE")
+        else
+            return os.getenv("HOME")
+        end
     else
         return os.getenv("HOME")
     end
@@ -19,12 +23,14 @@ function isSpriteValid()
 end
 
 function sendData()
+    local oSName = app.os.name or "Unknown"
+
     local cmd = string.format(
         '%s/.wakatime/%s --language Aseprite --category designing --plugin "Aseprite/%s (%s-none-none) aseprite-wakatime/%s" --time %d --project "%s" --lineno %d --lines-in-file %d --entity "%s" ',
         getUserPath(),
         "wakatime-cli",
         AsepriteVer.major .. "." .. AsepriteVer.minor,
-        app.os.name,
+        oSName,
         PluginVer,
         os.time(),
         ProjectName,
