@@ -7,7 +7,7 @@ SpriteListener = nil
 
 
 function getUserPath()
-    if app.os.name then
+    if app.os then
         if app.os.name == "Windows" then
             return os.getenv("USERPROFILE")
         else
@@ -23,7 +23,7 @@ function isSpriteValid()
 end
 
 function sendData()
-    local oSName = app.os.name or "Unknown"
+    local oSName = (app.os and app.os.name) or "Unknown"
 
     local cmd = string.format(
         '%s/.wakatime/%s --language Aseprite --category designing --plugin "Aseprite/%s (%s-none-none) aseprite-wakatime/%s" --time %d --project "%s" --lineno %d --lines-in-file %d --entity "%s" ',
