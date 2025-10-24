@@ -6,23 +6,29 @@ Sprite = nil
 SpriteListener = nil
 
 
-function getUserPath()
+local function getUserPath()
     if app.os then
         if app.os.name == "Windows" then
             return os.getenv("USERPROFILE")
         else
-            return os.getenv("HOME")
+            local f = io.popen("eval echo ~")
+            if not f then
+                return os.getenv("HOME")
+            end
+            local home = f:read("*l")
+            f:close()
+            return home
         end
     else
         return os.getenv("HOME")
     end
 end
 
-function isSpriteValid()
+local function isSpriteValid()
     return Sprite ~= nil and app.sprite ~= nil and Sprite == app.sprite
 end
 
-function sendData()
+local function sendData()
     local oSName = (app.os and app.os.name) or "Unknown"
 
     local cmd = string.format(
