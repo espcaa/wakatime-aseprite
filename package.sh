@@ -1,4 +1,4 @@
-rm build/wakatime-aseprite.aseprite-extension
+rm dist/wakatime-aseprite.aseprite-extension
 
-mkdir -p build
-zip -r build/wakatime-aseprite.aseprite-extension src
+mkdir -p dist
+zip -r dist/wakatime-aseprite.aseprite-extension src
