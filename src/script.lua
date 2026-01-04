@@ -67,7 +67,7 @@ local function getWakatimeCliPath()
 end
 
 local function updateSprite(bypass_timer, is_write)
-    if isSpriteValid() and (not LastTime or LastTime < os.time() - 120) then
+    if isSpriteValid() and (not LastTime or LastTime < os.time() - 120 or bypass_timer) then
 
         -- create the heartbeat
 
@@ -96,11 +96,14 @@ local function updateSprite(bypass_timer, is_write)
 
         -- send the heartbeat
         SendHeartbeat(heartbeat)
-        LastTime = os.time()
+        if not bypass_timer then
+            LastTime = os.time()
+        end
     end
 end
 
 function SendHeartbeat(heartbeat)
+    app.alert("Sending heartbeat for " .. heartbeat.entity)
     local wakatimeCliPath = getWakatimeCliPath()
     if not wakatimeCliPath then
         app.alert("Wakatime CLI not found. Please ensure it is installed in the .wakatime folder.")
@@ -130,26 +133,28 @@ function SendHeartbeat(heartbeat)
 end
 
 local function registerSprite()
-    if isSpriteValid() then
-        Sprite.events:off(SpriteListener)
-        SpriteListener = nil
-    end
+    -- if the sprite changed, or we didn't have one
+    if app.sprite ~= Sprite then
+        app.alert("Registering new sprite for wakatime tracking.")
+        -- remove old listener first
+        if SpriteListener and Sprite then
+            Sprite.events:off(SpriteListener)
+            SpriteListener = nil
+        end
 
-    if app.sprite then
+        -- update current sprite
+        Sprite = app.sprite
 
-        if app.sprite == Sprite then
-            return
-        else
-            -- change detected
-            -- sending a heartbeat for the new sprite
+        if Sprite then
+            -- send heartbeat for new sprite
             updateSprite(true, false)
-            Sprite = app.sprite
+
+            -- register listener for any changes
             SpriteListener = Sprite.events:on("change", function()
+                -- bypass timer to send heartbeat immediately
                 updateSprite(false, false)
             end)
         end
-    else
-        Sprite = nil
     end
 end
 
@@ -226,45 +231,52 @@ function SetProjectName(plugin)
     dlg:show({ wait = true })
 end
 
-function CheckForSave()
-    local spr = app.activeSprite
-    if not spr then
-        app.alert("No active sprite")
-        return
+function GetModTime(path)
+    local handle, result
+    if package.config:sub(1,1) == "\\" then
+        -- Windows
+        handle = io.popen('powershell -Command "(Get-Item \''..path..'\').LastWriteTimeUtc.ToUnixTimeSeconds()"')
+        result = handle:read("*n")
+    elseif package.config:sub(1,1) == "/" then
+        -- macOS or Linux
+        -- check OS
+        local os_name = app.os.name or "Unknown"
+
+        if os_name == "macOS" then
+            handle = io.popen('stat -f %m \''..path..'\'')
+        else
+            -- assume Linux
+            handle = io.popen('stat -c %Y \''..path..'\'')
+        end
+        result = handle:read("*n")
+    else
+        -- unknown OS
+        return nil
     end
+    handle:close()
+    return result
+end
+
+function CheckForSave()
+    local spr = app.sprite
+    if not spr then return end
 
     local filename = spr.filename
-    if filename == "" then
-        app.alert("Sprite has not been saved yet")
-        return
-    end
+    if filename == "" or not app.fs.isFile(filename) then return end
 
-    -- Check if file exists
-    if not app.fs.isFile(filename) then
-        app.alert("File does not exist on disk")
-        return
-    end
+    local currentMod = GetModTime(filename)
+    if not currentMod then return end
 
-    -- Get last modification time
-    -- Lua doesn't have a direct file mod time, but we can use lfs if available
-    local success, lfs = pcall(require, "lfs")
-    if success then
-        local attr = lfs.attributes(filename)
-        if attr and attr.modification then
-            -- if saved within last 2 seconds, consider it a save event
-            local currentTime = os.time()
-            if currentTime - attr.modification <= 2 then
-                updateSprite(true, true)
-                app.alert("Save event detected and heartbeat sent")
-            else
-                return
-            end
-        else
-            return
-        end
-    else
-        app.alert("LuaFileSystem (lfs) not available (uh?)")
+    local now = os.time()
+    if now - currentMod <= 2 then
+        -- file was saved in the last 2 seconds
+        updateSprite(true, true)
     end
+end
+
+
+function UpdateSpriteHelper()
+    updateSprite(false, false)
 end
 
 function init(plugin)
@@ -291,7 +303,7 @@ function init(plugin)
     if ProjectName == "Untitled" then
         app.alert(
             "Don't forget to set your project name for accurate tracking. "
-            .. "Access it via the burger menu -> Set Project Name."
+            .. "Access it via the burger menu -> Set wakatime project name."
         )
     end
 
@@ -301,6 +313,7 @@ function init(plugin)
         interval = 2.0,
         ontick = function()
             registerSprite()
+            CheckForSave()
         end,
     })
     timer:start()
