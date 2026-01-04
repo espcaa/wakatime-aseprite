@@ -103,7 +103,6 @@ local function updateSprite(bypass_timer, is_write)
 end
 
 function SendHeartbeat(heartbeat)
-    app.alert("Sending heartbeat for " .. heartbeat.entity)
     local wakatimeCliPath = getWakatimeCliPath()
     if not wakatimeCliPath then
         app.alert("Wakatime CLI not found. Please ensure it is installed in the .wakatime folder.")
@@ -135,7 +134,6 @@ end
 local function registerSprite()
     -- if the sprite changed, or we didn't have one
     if app.sprite ~= Sprite then
-        app.alert("Registering new sprite for wakatime tracking.")
         -- remove old listener first
         if SpriteListener and Sprite then
             Sprite.events:off(SpriteListener)
@@ -298,7 +296,7 @@ function init(plugin)
         plugin.preferences.projectName = ProjectName
     end
 
-    app.alert("Wakatime plugin is loaded.")
+    app.alert("Wakatime Aseprite plugin v" .. PluginVer .. " loaded!!")
 
     if ProjectName == "Untitled" then
         app.alert(
