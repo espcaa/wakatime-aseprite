@@ -60,7 +60,7 @@ local function getWakatimeCliPath()
     local wakatimeDir = userDir .. app.fs.pathSeparator .. ".wakatime"
     local files = app.fs.listFiles(wakatimeDir)
     for _, file in ipairs(files) do
-        if file:match("^wakatime%-cli") then
+        if file:match("^wakatime%-cli") and not file:match("%.zip$") then
             return wakatimeDir .. app.fs.pathSeparator .. file
         end
     end
@@ -125,10 +125,14 @@ function SendHeartbeat(heartbeat)
     end
 
     if app.os and app.os.name == "Windows" then
-        os.execute("start /b " .. cmd)
+        ExecuteOnWindows(cmd)
     else
         os.execute(cmd .. " &")
     end
+end
+
+function ExecuteOnWindows(cmd)
+    io.popen('start "" cmd /c "' .. cmd .. '"')
 end
 
 local function registerSprite()
@@ -233,7 +237,10 @@ function GetModTime(path)
     local handle, result
     if package.config:sub(1,1) == "\\" then
         -- Windows
-        handle = io.popen('powershell -Command "(Get-Item \''..path..'\').LastWriteTimeUtc.ToUnixTimeSeconds()"')
+        handle = io.popen('powershell -Command "(Get-Item \'' .. path .. '\').LastWriteTimeUtc.ToUnixTimeSeconds()"')
+        if not handle then
+            return nil
+        end
         result = handle:read("*n")
     elseif package.config:sub(1,1) == "/" then
         -- macOS or Linux
@@ -241,17 +248,23 @@ function GetModTime(path)
         local os_name = app.os.name or "Unknown"
 
         if os_name == "macOS" then
-            handle = io.popen('stat -f %m \''..path..'\'')
+            handle = io.popen('stat -f %m \'' .. path .. '\'')
         else
             -- assume Linux
-            handle = io.popen('stat -c %Y \''..path..'\'')
+            handle = io.popen('stat -c %Y \'' .. path .. '\'')
+        end
+        if not handle then
+            return nil
         end
         result = handle:read("*n")
     else
         -- unknown OS
         return nil
     end
-    handle:close()
+
+    if handle then
+        handle:close()
+    end
     return result
 end
 
