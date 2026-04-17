@@ -1,4 +1,4 @@
-<img width="400" height="640" alt="image" src="https://github.com/user-attachments/assets/cd6a92ad-604c-4f20-b5e9-6a4222b0b1f7" />
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/cd6a92ad-604c-4f20-b5e9-6a4222b0b1f7" />
 
 # Wakatime-Aseprite
 
