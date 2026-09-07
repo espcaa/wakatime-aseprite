@@ -132,7 +132,7 @@ function SendHeartbeat(heartbeat)
 end
 
 function ExecuteOnWindows(cmd)
-    io.popen('start "" cmd /c "' .. cmd .. '"')
+    os.execute(cmd)
 end
 
 local function registerSprite()
